@@ -21,21 +21,7 @@ const storage = multer.diskStorage({
 const upload = multer({ storage });
 
 const Users = require('../model/users');
-const Shops = require('../model/shops');
 const { BadRequestHandler, ResourceExistsRequestHandler } = require('../handler/request-handler');
-/* GET users listing. */
-router.get('/', function (req, res, next) {
-	Users.find({ isActive: true })
-		.select('cardName cardAddress address name mobile profession email')
-		.lean()
-		.exec()
-		.then((users) => {
-			res.status(200).send(users);
-		})
-		.catch((error) => {
-			res.status(error.status || 500).send(error);
-		})
-});
 
 router.get('/all', function (req, res, next) {
 	Users.find({})
@@ -67,7 +53,7 @@ router.get('/:id', function (req, res, next) {
 });
 
 router.post('/', function (req, res, next) {
-	return register(req, res);
+	return this.register(req, res);
 });
 
 router.post('/register', upload.single('avatar'), function (req, res, next) {
@@ -108,29 +94,23 @@ router.delete('/:id', function (req, res, next) {
 
 const register = async (req, res) => {
 	try {
-		if (req.file && req.file.path) {
-			req.body.profile = req.file.path;
-		}
-		const userDocument = new Users({ ...req.body });
+		const userDocument = new Users({ ...req.body, profile: req.file.path });
 		userDocument.save()
 			.then((user) => {
 				delete user._doc.password;
 				return res.status(200).send({ user: userDocument });
 			})
 			.catch(async (error) => {
-				debugger
-				if (req.file) {
-					if (fs.existsSync(req.file.destination)) {
-						fs.readdirSync(req.file.destination).forEach(function (file) {
-							const curPath = req.file.destination + "/" + file;
-							if (fs.lstatSync(curPath).isDirectory()) { // recurse
-								deleteFolderRecursive(curPath);
-							} else { // delete file
-								fs.unlinkSync(curPath);
-							}
-						});
-						fs.rmdirSync(req.file.destination);
-					}
+				if (fs.existsSync(req.file.destination)) {
+					fs.readdirSync(req.file.destination).forEach(function (file) {
+						const curPath = req.file.destination + "/" + file;
+						if (fs.lstatSync(curPath).isDirectory()) { // recurse
+							deleteFolderRecursive(curPath);
+						} else { // delete file
+							fs.unlinkSync(curPath);
+						}
+					});
+					fs.rmdirSync(req.file.destination);
 				}
 				if (error) {
 					if (error.name === 'MongoError' && error.code === 11000) {
@@ -174,16 +154,10 @@ const login = async (req, res) => {
 						user.sessionCount++;
 						await Users.findOneAndUpdate({ _id: user._id }, user);
 					}
-					const shopOwner = user.profession === 2;
-					let hasShop = false;
-					if (shopOwner) {
-						const shops = await Shops.find({user: user._id});
-						hasShop = !!shops.length;
-					}
-					// delete user._id;
+					delete user._id;
 					const jwtKey = 'jwtKey';
 					const jwtExpirySeconds = 24 * 1 * 60; // (hour * minute * second)
-					const token = jwt.sign({ email: user.email, shopOwner, hasShop, _id: user._id }, jwtKey, {
+					const token = jwt.sign({ email: user.email }, jwtKey, {
 						algorithm: "HS256",
 						expiresIn: jwtExpirySeconds,
 					});
@@ -193,7 +167,7 @@ const login = async (req, res) => {
 					return res.status(400).send({ isSuccess: false, message: 'password does not matched' });
 				}
 			} else {
-				return res.status(404).send({ isSuccess: false, message: 'User Doesn\'t Exists.. ' });
+				return res.status(404).send({ isSuccess: false, message: 'user not found' });
 			}
 		})
 		.catch((error) => {
