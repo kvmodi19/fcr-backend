@@ -60,13 +60,15 @@ router.post('/', function (req, res, next) {
 });
 
 router.post('/search', function (req, res) {
-	debugger
+	const { offset } = req.query;
+	const limit = 5;
+	const skip = Number(offset || 0) * limit;
 	let findObject = {};
 	if (req.body.searchBy === 'any') {
 		const regexObj = { $regex: req.body.text, '$options': 'i' };
-		findObject = { $or: [ { address: regexObj }, { name: regexObj } ] };
+		findObject = { $or: [ { address: regexObj }, { name: regexObj } ], isDeleted: false, isActive: true };
 	} else {
-		findObject = { address: { $regex: req.body.text } };
+		findObject = { address: { $regex: req.body.text }, isDeleted: false, isActive: true };
 	}
 	findObject = { ...findObject, isActive: true };
 	Shops.aggregate([
@@ -82,14 +84,14 @@ router.post('/search', function (req, res) {
 
 			}
 		},
-		{ "$unwind": "$user" }
+		{ "$unwind": "$user" },
+		{ "$limit": skip + limit },
+		{ "$skip": skip }
 	])
 		.exec()
-		.then((data) => {
-			data.forEach(() => {
-
-			})
-			return res.status(200).send({ isSuccess: true, data });
+		.then(async (data) => {
+			const total = await Shops.find({isDeleted: false, isActive: true});
+			return res.status(200).send({ isSuccess: true, data, total: total.length });
 		})
 		.catch((error) => {
 			return res.status(500).send({ isSuccess: true, message: error.message });
