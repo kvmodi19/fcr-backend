@@ -4,7 +4,7 @@ let env= {
         ipUrl: 'https://freegeoip.net/json/'
     },
     dev: {
-        mongoUrl: process.env.mongoUrl || 'mongodb://localhost:27017/FCR',
+        mongoUrl: process.env.mongoUrl || 'mongodb+srv://fcrdev:fcrdev123@fcr.3ozcv.mongodb.net/FCR?retryWrites=true&w=majority',
         ipUrl: 'https://freegeoip.net/json/'
     }
 };
