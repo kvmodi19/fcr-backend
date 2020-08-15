@@ -1,4 +1,4 @@
-const chatModel = rerquire('../model/chat');
+const chatModel = require('../model/chat');
 
 chatController = {
     add: async (chat) => {
