@@ -10,6 +10,7 @@ const http = require('http');
 const mongoose = require('mongoose');
 
 const config = require('../config');
+const chat = require('../controller/chat');
 
 /**
  * Get port from environment and store in Express.
@@ -50,8 +51,13 @@ io.on('connection', (socket) => {
 		io.emit('users-changed', { user: nickname, event: 'joined' });
 	});
 
-	socket.on('add-message', (message) => {
-		io.emit('message', { text: message.text, from: socket.nickname, created: new Date() });
+	socket.on('add-message', async (message) => {
+		try {
+			message = await chat.add(message);
+			io.emit('message', { ...message });
+		} catch (error) {
+			console.log(error);
+		}
 	});
 	console.log('socket connected');
 });
@@ -116,3 +122,6 @@ function onListening() {
 	debug('Listening on ' + bind);
 	console.log('Listening on ' + bind);
 }
+
+
+// mongodb+srv://fcrdev:fcrdev123@fcr.3ozcv.mongodb.net/FCR?retryWrites=true&w=majority

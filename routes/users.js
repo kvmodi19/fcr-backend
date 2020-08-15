@@ -180,10 +180,17 @@ const login = async (req, res) => {
 						const shops = await Shops.find({user: user._id});
 						hasShop = !!shops.length;
 					}
-					// delete user._id;
+
+					const tokenObj = {
+						email: user.email,
+						shopOwner,
+						hasShop,
+						_id: user._id,
+						name: user.name
+					}
 					const jwtKey = 'jwtKey';
 					const jwtExpirySeconds = 24 * 1 * 60; // (hour * minute * second)
-					const token = jwt.sign({ email: user.email, shopOwner, hasShop, _id: user._id }, jwtKey, {
+					const token = jwt.sign({ ...tokenObj }, jwtKey, {
 						algorithm: "HS256",
 						expiresIn: jwtExpirySeconds,
 					});
