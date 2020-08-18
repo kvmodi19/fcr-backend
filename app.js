@@ -10,8 +10,9 @@ const bcrypt = require('bcrypt');
 // routes
 const indexRouter = require('./routes/index');
 const usersRouter = require('./routes/users');
-const shopsRouter = require('./routes/shops');
+const serviceProviderRouter = require('./routes/serviceProvider');
 const promoCodeRouter = require('./routes/promocodes');
+const chatRouter = require('./routes/chat');
 
 const app = express();
 // enable cors
@@ -30,8 +31,9 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 app.use('/', indexRouter);
 app.use('/users', usersRouter.router);
-app.use('/shops', shopsRouter);
+app.use('/serviceProvider', serviceProviderRouter);
 app.use('/promoCodes', promoCodeRouter);
+app.use('/chat', chatRouter);
 
 app.post('/login', (req, res) => {
 	return usersRouter.login(req, res);

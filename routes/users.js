@@ -21,7 +21,7 @@ const storage = multer.diskStorage({
 const upload = multer({ storage });
 
 const Users = require('../model/users');
-const Shops = require('../model/shops');
+const Serviceprovider = require('../model/serviceProvider');
 const { BadRequestHandler, ResourceExistsRequestHandler } = require('../handler/request-handler');
 /* GET users listing. */
 router.get('/', function (req, res, next) {
@@ -177,8 +177,8 @@ const login = async (req, res) => {
 					const shopOwner = user.profession === 2;
 					let hasShop = false;
 					if (shopOwner) {
-						const shops = await Shops.find({user: user._id});
-						hasShop = !!shops.length;
+						const serviceProvider = await ServiceProvider.find({user: user._id});
+						hasShop = !!serviceProvider.length;
 					}
 
 					const tokenObj = {

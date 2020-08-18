@@ -1,18 +1,18 @@
 const express = require('express');
 const router = express.Router();
 
-const Shops = require('../model/shops');
+const ServiceProvider = require('../model/serviceProvider');
 
 const discardUserFields = '-password -lastLogin -sessionCount -createdAt -updatedAt -isActive -isDeleted';
 
-/* GET shops listing. */
+/* GET serviceProvider listing. */
 router.get('/', function (req, res, next) {
-	Shops.find({ isActive: true })
+	ServiceProvider.find({ isActive: true })
 		.populate('user', discardUserFields)
 		.lean()
 		.exec()
-		.then((shops) => {
-			res.status(200).send(shops);
+		.then((serviceProvider) => {
+			res.status(200).send(serviceProvider);
 		})
 		.catch((error) => {
 			res.status(error.status || 500).send(error);
@@ -20,12 +20,12 @@ router.get('/', function (req, res, next) {
 });
 
 router.get('/all', function (req, res, next) {
-	Shops.find({})
+	ServiceProvider.find({})
 		.populate('user', '-password')
 		.lean()
 		.exec()
-		.then((shops) => {
-			res.status(200).send(shops);
+		.then((serviceProvider) => {
+			res.status(200).send(serviceProvider);
 		})
 		.catch((error) => {
 			res.status(error.status || 500).send(error);
@@ -33,7 +33,7 @@ router.get('/all', function (req, res, next) {
 });
 
 router.get('/:id', function (req, res, next) {
-	Shops.findOne({ _id: req.params.id })
+	ServiceProvider.findOne({ _id: req.params.id })
 		.populate('user', discardUserFields)
 		.lean()
 		.exec()
@@ -50,7 +50,7 @@ router.get('/:id', function (req, res, next) {
 });
 
 router.post('/', function (req, res, next) {
-	const shopDocument = new Shops({ ...req.body });
+	const shopDocument = new ServiceProvider({ ...req.body });
 	shopDocument.save().then((shop) => {
 		delete shop._doc.password;
 		return res.status(200).send({ shop: shopDocument });
@@ -71,7 +71,7 @@ router.post('/search', function (req, res) {
 		findObject = { address: { $regex: req.body.text }, isDeleted: false, isActive: true };
 	}
 	findObject = { ...findObject, isActive: true };
-	Shops.aggregate([
+	ServiceProvider.aggregate([
 		{
 			$match: findObject,
 		},
@@ -90,7 +90,7 @@ router.post('/search', function (req, res) {
 	])
 		.exec()
 		.then(async (data) => {
-			const total = await Shops.find({isDeleted: false, isActive: true});
+			const total = await ServiceProvider.find({isDeleted: false, isActive: true});
 			return res.status(200).send({ isSuccess: true, data, total: total.length });
 		})
 		.catch((error) => {
@@ -103,13 +103,13 @@ router.put('/:id', function (req, res, next) {
 });
 
 router.delete('/:id', function (req, res, next) {
-	Shops.findOne({ _id: req.params.id })
+	ServiceProvider.findOne({ _id: req.params.id })
 		.lean()
 		.exec()
 		.then(async (shop) => {
 			shop.isDeleted = true;
 			shop.isActive = false;
-			await Shops.findOneAndUpdate({ _id: shop._id }, shop);
+			await ServiceProvider.findOneAndUpdate({ _id: shop._id }, shop);
 			res.status(200).send({ isSuccess: true, message: 'shop deleted' });
 		})
 		.catch((error) => {

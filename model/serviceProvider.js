@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 
-const shopSchema = mongoose.Schema({
+const serviceProviderSchema = mongoose.Schema({
 	name: String,
 	user: { type: mongoose.Schema.Types.ObjectId, ref: 'Users' },
 	description: String,
@@ -23,4 +23,4 @@ const shopSchema = mongoose.Schema({
 	},
 });
 
-module.exports = mongoose.model('Shops', shopSchema);
+module.exports = mongoose.model('ServiceProviders', serviceProviderSchema);

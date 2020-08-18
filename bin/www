@@ -53,7 +53,7 @@ io.on('connection', (socket) => {
 
 	socket.on('add-message', async (message) => {
 		try {
-			message = await chat.add(message);
+			await chat.add(message);
 			io.emit('message', { ...message });
 		} catch (error) {
 			console.log(error);

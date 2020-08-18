@@ -10,6 +10,10 @@ const NotFoundRequestHandler = (req, res, error) => {
 	return res.status(404).send({isSuccess: false, message: error.message});
 };
 
+const InternalServerErrorHandler = (req, res, error) => {
+	return res.status(error.status || 500).send({isSuccess: false, message: error.message});
+};
+
 module.exports = {
 	BadRequestHandler,
 	ResourceExistsRequestHandler,
