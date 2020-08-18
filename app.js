@@ -11,6 +11,7 @@ const bcrypt = require('bcrypt');
 const indexRouter = require('./routes/index');
 const usersRouter = require('./routes/users');
 const shopsRouter = require('./routes/shops');
+const notificationsRouter = require('./routes/notification');
 const promoCodeRouter = require('./routes/promocodes');
 
 const app = express();
@@ -31,6 +32,7 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use('/', indexRouter);
 app.use('/users', usersRouter.router);
 app.use('/shops', shopsRouter);
+app.use('/notifications', notificationsRouter);
 app.use('/promoCodes', promoCodeRouter);
 
 app.post('/login', (req, res) => {
