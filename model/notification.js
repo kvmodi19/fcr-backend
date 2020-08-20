@@ -12,6 +12,10 @@ const notificationSchema = mongoose.Schema({
 		type: Date,
 		default: new Date()
 	},
+	isDeleted: {
+		type: Boolean,
+		default: false
+	}
 });
 
 module.exports = mongoose.model('Notification', notificationSchema);

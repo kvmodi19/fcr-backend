@@ -110,7 +110,7 @@ router.delete('/:id', function (req, res, next) {
 			shop.isDeleted = true;
 			shop.isActive = false;
 			await ServiceProvider.findOneAndUpdate({ _id: shop._id }, shop);
-			res.status(200).send({ isSuccess: true, message: 'shop deleted' });
+			res.status(200).send({ isSuccess: true, message: 'service provider detail deleted' });
 		})
 		.catch((error) => {
 			res.status(error.status || 500).send(error);
