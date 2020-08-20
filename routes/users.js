@@ -21,7 +21,7 @@ const storage = multer.diskStorage({
 const upload = multer({ storage });
 
 const Users = require('../model/users');
-const Serviceprovider = require('../model/serviceProvider');
+const ServiceProvider = require('../model/serviceProvider');
 const { BadRequestHandler, ResourceExistsRequestHandler } = require('../handler/request-handler');
 /* GET users listing. */
 router.get('/', function (req, res, next) {
