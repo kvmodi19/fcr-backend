@@ -3,7 +3,7 @@ const router = express.Router();
 
 const controller = require('../controller/chat');
 
-const { BadRequestHandler, InternalServerErrorHandler } = require('../handler/request-handler');
+const { InternalServerErrorHandler } = require('../handler/request-handler');
 
 router.get('/list/:userId', async function (req, res, next) {
 	try {
@@ -11,7 +11,7 @@ router.get('/list/:userId', async function (req, res, next) {
 		const data = await controller.getUserChatList(userId);
 		return res.status(200).send(data);
 	} catch(error) {
-		return InternalServerErrorHandler(re, res, error);
+		return InternalServerErrorHandler(req, res, error);
 	}
 });
 

@@ -1,7 +1,8 @@
 const mongoose = require('mongoose');
 
 const serviceProviderSchema = mongoose.Schema({
-	name: String,
+	eCardName: String,
+	service: String,
 	user: { type: mongoose.Schema.Types.ObjectId, ref: 'Users' },
 	description: String,
 	address: {},

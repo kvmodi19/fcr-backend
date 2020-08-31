@@ -23,6 +23,9 @@ const upload = multer({ storage });
 const Users = require('../model/users');
 const ServiceProvider = require('../model/serviceProvider');
 const { BadRequestHandler, ResourceExistsRequestHandler } = require('../handler/request-handler');
+
+const discardUserFields = '-password -lastLogin -sessionCount -createdAt -updatedAt -isActive -isDeleted';
+
 /* GET users listing. */
 router.get('/', function (req, res, next) {
 	Users.find({ isActive: true })
@@ -57,6 +60,25 @@ router.get('/:id', function (req, res, next) {
 		.then((user) => {
 			if (user) {
 				return res.status(200).send({ isSuccess: true, user });
+			} else {
+				return res.status(404).send({ isSuccess: false, message: 'no user found' })
+			}
+		})
+		.catch((error) => {
+			res.status(error.status || 500).send(error);
+		})
+});
+
+router.get('/:id/service', function (req, res, next) {
+	ServiceProvider.findOne({ user: req.params.id })
+		.lean()
+		.select('eCardName description address service')
+		.sort({createdAt: 1})
+		.populate('user', discardUserFields)
+		.exec()
+		.then((service) => {
+			if (service) {
+				return res.status(200).send({ isSuccess: true, service });
 			} else {
 				return res.status(404).send({ isSuccess: false, message: 'no user found' })
 			}

@@ -1,4 +1,6 @@
 const chatModel = require('../model/chat');
+const mongoose = require('mongoose');
+const avatarBaseUrl = require('../config')['avatarBaseUrl'];
 
 chatController = {
     add: async (chat) => {
@@ -16,51 +18,70 @@ chatController = {
             })
     }),
     getUserChatList: (userId) => new Promise((resolve, reject) => {
-        debugger
         chatModel.aggregate(
             [
                 {
-                    $match:
+                    "$match":
                     {
-                        $or:
+                        "$or":
                             [
-                                { from: userId },
-                                { to: userId }
+                                { "from": mongoose.Types.ObjectId(userId) },
+                                { "to": mongoose.Types.ObjectId(userId) }
                             ]
                     }
                 },
-                { $sort: { createdAt: -1 } },
+                { "$sort": { "createdAt": -1 } },
                 {
-                    $group: {
-                        _id: $from,
-                        to: { $first: $to },
-                        message: { $first: $message },
-                        date: { $first: $date },
-                        origId: { $first: $_id },
+                    "$group": {
+                        "_id": "$from",
+                        "to": { "$first": "$to" },
+                        "message": { "$first": "$message" },
+                        "date": { "$first": "$createdAt" },
+                        "origId": { "$first": "$_id" },
                     }
                 },
                 {
-                    $lookup: {
-                        from: users,
-                        localField: from,
-                        foreignField: _id,
-                        as: from
+                    "$lookup": {
+                        "from": "users",
+                        "localField": "from",
+                        "foreignField": "_id",
+                        "as": "from"
                     }
                 },
                 {
-                    $lookup: {
-                        from: users,
-                        localField: to,
-                        foreignField: _id,
-                        as: to
+                    "$lookup": {
+                        "from": "users",
+                        "localField": "to",
+                        "foreignField": "_id",
+                        "as": "to"
                     }
                 },
-                { $unwind: { path: $_id } },
-                { $unwind: { path: $to } }
+                { "$unwind": { "path": "$_id" } },
+                { "$unwind": { "path": "$to" } },
+                {
+                    '$project': {
+                        "_id": "$_id",
+                        "from": {
+                            "name": "$from.name",
+                            "_id": "$from._id"
+                        },
+                        "to": {
+                            "name": "$to.name",
+                            "_id": "$to._id"
+                        },
+                        "message": "$message",
+                        "messageId": "$origId",
+                        "date": "$date",
+                    }
+                }
             ],
             function(err,results) {
-                debugger
                 if (err) return reject(err);
+                results.forEach((data, index) => {
+                    if (data.to) {
+                        results[index].to.avtar = `${avatarBaseUrl}${data.to.name}`;
+                    }
+                })
                 return resolve(results);
             })
 

@@ -37,11 +37,11 @@ router.get('/:id', function (req, res, next) {
 		.populate('user', discardUserFields)
 		.lean()
 		.exec()
-		.then((shop) => {
-			if (shop) {
-				return res.status(200).send({ isSuccess: true, shop });
+		.then((serviceProvider) => {
+			if (serviceProvider) {
+				return res.status(200).send({ isSuccess: true, serviceProvider });
 			} else {
-				return res.status(404).send({ isSuccess: false, message: 'no shop found' })
+				return res.status(404).send({ isSuccess: false, message: 'no serviceProvider found' })
 			}
 		})
 		.catch((error) => {
@@ -51,9 +51,9 @@ router.get('/:id', function (req, res, next) {
 
 router.post('/', function (req, res, next) {
 	const shopDocument = new ServiceProvider({ ...req.body });
-	shopDocument.save().then((shop) => {
-		delete shop._doc.password;
-		return res.status(200).send({ shop: shopDocument });
+	shopDocument.save().then((serviceProvider) => {
+		delete serviceProvider._doc.password;
+		return res.status(200).send({ serviceProvider: shopDocument });
 	}).catch((error) => {
 		return res.status(error.status || 500).send(error);
 	})
@@ -61,37 +61,47 @@ router.post('/', function (req, res, next) {
 
 router.post('/search', function (req, res) {
 	const { offset } = req.query;
+	const {
+		city,
+		pinCode,
+		country,
+		text
+	} = req.body;
 	const limit = 5;
 	const skip = Number(offset || 0) * limit;
-	let findObject = {};
-	if (req.body.searchBy === 'any') {
-		const regexObj = { $regex: req.body.text, '$options': 'i' };
-		findObject = { $or: [ { address: regexObj }, { name: regexObj } ], isDeleted: false, isActive: true };
-	} else {
-		findObject = { address: { $regex: req.body.text }, isDeleted: false, isActive: true };
+	let findObject = {
+		isDeleted: false, isActive: true
+	};
+	if (text) {
+		findObject['eCardName'] = { $regex: text, '$options': 'i' };
 	}
 	findObject = { ...findObject, isActive: true };
-	ServiceProvider.aggregate([
-		{
-			$match: findObject,
-		},
-		{
-			$lookup: {
-				from: 'users',
-				localField: 'user',
-				foreignField: '_id',
-				as: 'user'
-
-			}
-		},
-		{ "$unwind": "$user" },
-		{ "$limit": skip + limit },
-		{ "$skip": skip }
-	])
+	ServiceProvider.find({...findObject})
+		.populate('user')
 		.exec()
 		.then(async (data) => {
 			const total = await ServiceProvider.find({isDeleted: false, isActive: true});
-			return res.status(200).send({ isSuccess: true, data, total: total.length });
+			let filteredData = data;
+			if (city || country || pinCode) {
+				filteredData = data.filter((service) => {
+					let matched = {
+						city: false,
+						country: false,
+						pinCode: false
+					}
+					if (city) {
+						matched.city = new RegExp(city, 'i').test(service.address.city);
+					}
+					if (pinCode) {
+						matched.pinCode = new RegExp(pinCode, 'i').test(service.address.pinCode);
+					}
+					if (country) {
+						matched.country = new RegExp(country, 'i').test(service.address.country);
+					}
+					return matched.city || matched.country || matched.pinCode;
+				});
+			}
+			return res.status(200).send({ isSuccess: true, data: [...filteredData], total: total.length });
 		})
 		.catch((error) => {
 			return res.status(500).send({ isSuccess: true, message: error.message });
@@ -106,10 +116,10 @@ router.delete('/:id', function (req, res, next) {
 	ServiceProvider.findOne({ _id: req.params.id })
 		.lean()
 		.exec()
-		.then(async (shop) => {
-			shop.isDeleted = true;
-			shop.isActive = false;
-			await ServiceProvider.findOneAndUpdate({ _id: shop._id }, shop);
+		.then(async (serviceProvider) => {
+			serviceProvider.isDeleted = true;
+			serviceProvider.isActive = false;
+			await ServiceProvider.findOneAndUpdate({ _id: serviceProvider._id }, serviceProvider);
 			res.status(200).send({ isSuccess: true, message: 'service provider detail deleted' });
 		})
 		.catch((error) => {
