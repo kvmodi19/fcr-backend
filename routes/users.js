@@ -1,5 +1,4 @@
 const express = require('express');
-const jwt = require('jsonwebtoken');
 const router = express.Router();
 const fs = require('fs');
 const multer = require('multer');
@@ -20,6 +19,7 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage });
 
+const { getJwt } = require('../handler/utils');
 const Users = require('../model/users');
 const ServiceProvider = require('../model/serviceProvider');
 const { BadRequestHandler, ResourceExistsRequestHandler } = require('../handler/request-handler');
@@ -73,7 +73,7 @@ router.get('/:id/service', function (req, res, next) {
 	ServiceProvider.findOne({ user: req.params.id })
 		.lean()
 		.select('eCardName description address service')
-		.sort({createdAt: 1})
+		.sort({ createdAt: 1 })
 		.populate('user', discardUserFields)
 		.exec()
 		.then((service) => {
@@ -89,10 +89,6 @@ router.get('/:id/service', function (req, res, next) {
 });
 
 router.post('/', function (req, res, next) {
-	return register(req, res);
-});
-
-router.post('/register', upload.single('avatar'), function (req, res, next) {
 	return register(req, res);
 });
 
@@ -198,9 +194,13 @@ const login = async (req, res) => {
 					}
 					const shopOwner = user.profession === 2;
 					let hasShop = false;
+					let serviceId = null;
 					if (shopOwner) {
-						const serviceProvider = await ServiceProvider.find({user: user._id});
+						const serviceProvider = await ServiceProvider.find({ user: user._id });
 						hasShop = !!serviceProvider.length;
+						if (hasShop) {
+							serviceId = serviceProvider[0]._id;
+						}
 					}
 
 					const tokenObj = {
@@ -208,16 +208,13 @@ const login = async (req, res) => {
 						shopOwner,
 						hasShop,
 						_id: user._id,
-						name: user.name
-					}
-					const jwtKey = 'jwtKey';
-					const jwtExpirySeconds = 24 * 1 * 60; // (hour * minute * second)
-					const token = jwt.sign({ ...tokenObj }, jwtKey, {
-						algorithm: "HS256",
-						expiresIn: jwtExpirySeconds,
-					});
-					res.cookie("token", token, { maxAge: jwtExpirySeconds * 1000 });
-					return res.status(200).send({ token },);
+						name: user.name,
+						serviceId
+					};
+
+					const token = await getJwt(tokenObj);
+
+					return res.status(200).send({ token });
 				} else {
 					return res.status(400).send({ isSuccess: false, message: 'password does not matched' });
 				}

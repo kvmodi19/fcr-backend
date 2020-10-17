@@ -17,5 +17,6 @@ const InternalServerErrorHandler = (req, res, error) => {
 module.exports = {
 	BadRequestHandler,
 	ResourceExistsRequestHandler,
-	NotFoundRequestHandler
+	NotFoundRequestHandler,
+	InternalServerErrorHandler
 };

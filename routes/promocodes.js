@@ -30,6 +30,35 @@ router.get('/all', function (req, res, next) {
 		})
 });
 
+router.get('/provider/:id', function (req, res, next) {
+	const serviceId = req.params.id;
+	PromoCodes.find({ serviceProvider: serviceId, isActive: true })
+		.populate('serviceProvider')
+		.lean()
+		.exec()
+		.then((promoCodes) => {
+			res.status(200).send(promoCodes);
+		})
+		.catch((error) => {
+			res.status(error.status || 500).send(error);
+		})
+});
+
+router.get('/user/:id', function (req, res, next) {
+	const userId = req.params.id;
+	PromoCodes.find({ user: userId, isActive: true })
+		.populate('serviceProvider user')
+		.lean()
+		.exec()
+		.then((promoCodes) => {
+			res.status(200).send(promoCodes);
+		})
+		.catch((error) => {
+			res.status(error.status || 500).send(error);
+		})
+});
+
+
 router.get('/:id', function (req, res, next) {
 	PromoCodes.findOne({ _id: req.params.id })
 		.populate('shop')

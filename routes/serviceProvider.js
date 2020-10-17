@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 
 const ServiceProvider = require('../model/serviceProvider');
+const { getJwt } = require('../handler/utils');
 
 const discardUserFields = '-password -lastLogin -sessionCount -createdAt -updatedAt -isActive -isDeleted';
 
@@ -51,15 +52,29 @@ router.get('/:id', function (req, res, next) {
 
 router.post('/', function (req, res, next) {
 	const shopDocument = new ServiceProvider({ ...req.body });
-	shopDocument.save().then((serviceProvider) => {
+	shopDocument.save().then(async (serviceProvider) => {
 		delete serviceProvider._doc.password;
-		return res.status(200).send({ serviceProvider: shopDocument });
+		const user = req.user;
+		const tokenObj = {
+			email: user.email,
+			shopOwner: true,
+			hasShop: true,
+			_id: user._id,
+			name: user.name,
+			serviceId: serviceProvider._id
+		};
+
+		const token = await getJwt(tokenObj);
+
+		return res.status(200).send({ token });
+		// return res.status(200).send({ serviceProvider: shopDocument });
 	}).catch((error) => {
 		return res.status(error.status || 500).send(error);
 	})
 });
 
 router.post('/search', function (req, res) {
+	debugger
 	const { offset } = req.query;
 	const {
 		city,
@@ -70,17 +85,20 @@ router.post('/search', function (req, res) {
 	const limit = 5;
 	const skip = Number(offset || 0) * limit;
 	let findObject = {
-		isDeleted: false, isActive: true
+		isDeleted: false,
+		isActive: true,
+		user: {$ne: req.user._id}
 	};
 	if (text) {
 		findObject['eCardName'] = { $regex: text, '$options': 'i' };
 	}
-	findObject = { ...findObject, isActive: true };
-	ServiceProvider.find({...findObject})
+	ServiceProvider.find({ ...findObject })
 		.populate('user')
+		.limit(limit)
+		.skip(skip)
 		.exec()
 		.then(async (data) => {
-			const total = await ServiceProvider.find({isDeleted: false, isActive: true});
+			const total = await ServiceProvider.find({ isDeleted: false, isActive: true });
 			let filteredData = data;
 			if (city || country || pinCode) {
 				filteredData = data.filter((service) => {

@@ -5,7 +5,6 @@ const cookieParser = require('cookie-parser');
 const logger = require('morgan');
 const bodyParser = require('body-parser');
 const cors = require('cors');
-const bcrypt = require('bcrypt');
 
 // routes
 const indexRouter = require('./routes/index');
@@ -14,6 +13,9 @@ const serviceProviderRouter = require('./routes/serviceProvider');
 const notificationsRouter = require('./routes/notification');
 const promoCodeRouter = require('./routes/promocodes');
 const chatRouter = require('./routes/chat');
+
+// middleware
+const middleware = require('./handler/middleware');
 
 const app = express();
 // enable cors
@@ -31,14 +33,17 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 app.use('/', indexRouter);
-app.use('/users', usersRouter.router);
-app.use('/serviceProvider', serviceProviderRouter);
-app.use('/notifications', notificationsRouter);
-app.use('/promoCodes', promoCodeRouter);
-app.use('/chat', chatRouter);
+app.use('/users', middleware.authUser, usersRouter.router);
+app.use('/serviceProvider', middleware.authUser, serviceProviderRouter);
+app.use('/notifications', middleware.authUser, notificationsRouter);
+app.use('/promoCodes', middleware.authUser, promoCodeRouter);
+app.use('/chat', middleware.authUser, chatRouter);
 
 app.post('/login', (req, res) => {
 	return usersRouter.login(req, res);
+});
+app.post('/register', function (req, res, next) {
+	return usersRouter.register(req, res);
 });
 
 // catch 404 and forward to error handler

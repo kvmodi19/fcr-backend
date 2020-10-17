@@ -2,7 +2,8 @@ const mongoose = require('mongoose');
 
 const promoCodeSchema = mongoose.Schema({
 	name: String,
-	shop: { type: mongoose.Schema.Types.ObjectId, ref: 'Shops' },
+	serviceProvider: { type: mongoose.Schema.Types.ObjectId, ref: 'ServiceProviders' },
+	user: { type: mongoose.Schema.Types.ObjectId, ref: 'Users' },
 	description: String,
 	isActive: {
 		type: Boolean,
