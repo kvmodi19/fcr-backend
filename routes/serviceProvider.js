@@ -74,24 +74,33 @@ router.post('/', function (req, res, next) {
 });
 
 router.post('/search', function (req, res) {
-	debugger
 	const { offset } = req.query;
-	const {
-		city,
-		pinCode,
-		country,
-		text
-	} = req.body;
 	const limit = 5;
 	const skip = Number(offset || 0) * limit;
 	let findObject = {
 		isDeleted: false,
 		isActive: true,
-		user: {$ne: req.user._id}
+		user: { $ne: req.user._id }
 	};
-	if (text) {
-		findObject['eCardName'] = { $regex: text, '$options': 'i' };
-	}
+	Object.keys(req.body).forEach((key) => {
+		switch (key) {
+			case 'text': {
+				findObject = {
+					...findObject,
+					eCardName: { $regex: req.body[key], '$options': 'i' }
+				}
+				break;
+			}
+			default: {
+				if (req.body[key]) {
+					findObject = {
+						...findObject,
+						[`address.${key}`]: { $regex: req.body[key], '$options': 'i' }
+					}
+				}
+			}
+		}
+	});
 	ServiceProvider.find({ ...findObject })
 		.populate('user')
 		.limit(limit)
@@ -99,27 +108,7 @@ router.post('/search', function (req, res) {
 		.exec()
 		.then(async (data) => {
 			const total = await ServiceProvider.find({ isDeleted: false, isActive: true });
-			let filteredData = data;
-			if (city || country || pinCode) {
-				filteredData = data.filter((service) => {
-					let matched = {
-						city: false,
-						country: false,
-						pinCode: false
-					}
-					if (city) {
-						matched.city = new RegExp(city, 'i').test(service.address.city);
-					}
-					if (pinCode) {
-						matched.pinCode = new RegExp(pinCode, 'i').test(service.address.pinCode);
-					}
-					if (country) {
-						matched.country = new RegExp(country, 'i').test(service.address.country);
-					}
-					return matched.city || matched.country || matched.pinCode;
-				});
-			}
-			return res.status(200).send({ isSuccess: true, data: [...filteredData], total: total.length });
+			return res.status(200).send({ isSuccess: true, data: [...data], total: total.length });
 		})
 		.catch((error) => {
 			return res.status(500).send({ isSuccess: true, message: error.message });
