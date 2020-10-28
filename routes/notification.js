@@ -14,6 +14,26 @@ router.get('/', function (req, res, next) {
 		})
 });
 
+router.get('/count', function (req, res, next) {
+	notificationController.getUserNotificationWithCount(req.user._id)
+		.then((notifications) => {
+			res.status(200).send(notifications);
+		})
+		.catch((error) => {
+			res.status(error.status || 500).send(error);
+		})
+});
+
+router.get('/:type(read|unread)/count', function (req, res, next) {
+	notificationController.getUserNotificationCount(req.user._id, req.params.type)
+		.then((notifications) => {
+			res.status(200).send(notifications);
+		})
+		.catch((error) => {
+			res.status(error.status || 500).send(error);
+		})
+});
+
 router.get('/all', function (req, res, next) {
 	notificationController.getAll()
 		.then((notifications) => {
@@ -40,6 +60,24 @@ router.get('/:id', function (req, res, next) {
 
 router.post('/', function (req, res, next) {
 	notificationController.add({ ...req.body })
+		.then((notification) => {
+		return res.status(200).send({ isSuccess: true });
+	}).catch((error) => {
+		return res.status(error.status || 500).send(error);
+	})
+});
+
+router.put('/read', function (req, res, next) {
+	notificationController.markAllRead(req.user._id)
+		.then((notification) => {
+		return res.status(200).send({ isSuccess: true });
+	}).catch((error) => {
+		return res.status(error.status || 500).send(error);
+	})
+});
+
+router.put('/visited/:id', function (req, res, next) {
+	notificationController.makrdVisited(req.params.id)
 		.then((notification) => {
 		return res.status(200).send({ isSuccess: true });
 	}).catch((error) => {

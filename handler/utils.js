@@ -1,6 +1,6 @@
 const { sign, verify } = require('jsonwebtoken');
 const options = require('../config');
-const jwtExpirySeconds = 24 * 1 * 60;
+const jwtExpirySeconds = 365 * 24 * 60 * 1000;
 
 const getJwt = (data, expires = jwtExpirySeconds) => new Promise((resolve, reject) => {
     sign(data, options.jwtSecret, { expiresIn: expires }, (err, token) => {
