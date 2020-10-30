@@ -4,6 +4,7 @@ const notificationSchema = mongoose.Schema({
 	title: String,
 	description: String,
 	user: { type: mongoose.Schema.Types.ObjectId, ref: 'Users' },
+	for: { type: mongoose.Schema.Types.ObjectId, ref: 'Users' },
 	type: {
 		type: String,
 		enum: ['message', 'visit']

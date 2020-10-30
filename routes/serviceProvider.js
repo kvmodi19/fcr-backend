@@ -107,8 +107,8 @@ router.post('/search', function (req, res) {
 		.skip(skip)
 		.exec()
 		.then(async (data) => {
-			const total = await ServiceProvider.find({ isDeleted: false, isActive: true });
-			return res.status(200).send({ isSuccess: true, data: [...data], total: total.length });
+			const total = await ServiceProvider.find({ isDeleted: false, isActive: true }).count();
+			return res.status(200).send({ isSuccess: true, data: [...data], total: total });
 		})
 		.catch((error) => {
 			return res.status(500).send({ isSuccess: true, message: error.message });

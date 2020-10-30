@@ -16,8 +16,8 @@ notificationController = {
             })
     }),
     getAllNotificationByUserID: (userID) => new Promise((resolve, reject) => {
-        notifications.find({ user: userID })
-            .populate('user', 'name')
+        notifications.find({ for: userID })
+            .populate('for', 'name')
             .lean()
             .exec()
             .then((data) => {
@@ -29,14 +29,14 @@ notificationController = {
     }),
     getUserNotificationWithCount: (userID,) => new Promise((resolve, reject) => {
         const limit = 10;
-        notifications.find({ user: userID })
+        notifications.find({ for: userID })
             .sort({ createdAt: -1 })
             .limit(limit)
-            .populate('user', 'name')
+            .populate('for', 'name')
             .lean()
             .exec()
             .then(async (data) => {
-                const count = await notifications.find({ user: userID, read: false }).count();
+                const count = await notifications.find({ for: userID, read: false }).count();
                 resolve({ count, data });
             })
             .catch((error) => {
@@ -45,8 +45,8 @@ notificationController = {
     }),
     getUserNotificationCount: (userID, type) => new Promise((resolve, reject) => {
         const read = type === 'read';
-        notifications.find({ user: userID, read })
-            .populate('user', 'name')
+        notifications.find({ for: userID, read })
+            .populate('for', 'name')
             .lean()
             .exec()
             .then((data) => {
@@ -58,7 +58,7 @@ notificationController = {
     }),
     makrdVisited: (notificationID) => new Promise((resolve, reject) => {
         notifications.findOneAndUpdate({ _id: notificationID }, { visited: true, read: true })
-            .populate('user', 'name')
+            .populate('for', 'name')
             .lean()
             .exec()
             .then((data) => {
@@ -69,8 +69,8 @@ notificationController = {
             })
     }),
     markAllRead: (userID) => new Promise((resolve, reject) => {
-        notifications.updateMany({ user: userID }, { read: true })
-            .populate('user', 'name')
+        notifications.updateMany({ for: userID }, { read: true })
+            .populate('for', 'name')
             .lean()
             .exec()
             .then((data) => {
