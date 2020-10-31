@@ -8,7 +8,7 @@ chatController = {
         await chatData.save();
     },
     getChatRoomData: (from, to) => new Promise((resolve, reject) => {
-        chatModel.find({ from, to })
+        chatModel.find({ from: { $in: [from, to] }, to: { $in: [to, from] } })
             .exec()
             .then((data) => {
                 resolve(data);
@@ -30,16 +30,7 @@ chatController = {
                             ]
                     }
                 },
-                { "$sort": { "createdAt": -1 } },
-                {
-                    "$group": {
-                        "_id": "$from",
-                        "to": { "$first": "$to" },
-                        "message": { "$first": "$message" },
-                        "date": { "$first": "$createdAt" },
-                        "origId": { "$first": "$_id" },
-                    }
-                },
+                { "$sort": { "_id": -1 } },
                 {
                     "$lookup": {
                         "from": "users",
@@ -58,6 +49,7 @@ chatController = {
                 },
                 { "$unwind": { "path": "$_id" } },
                 { "$unwind": { "path": "$to" } },
+                { "$unwind": { "path": "$from" } },
                 {
                     '$project': {
                         "_id": "$_id",
@@ -70,19 +62,42 @@ chatController = {
                             "_id": "$to._id"
                         },
                         "message": "$message",
-                        "messageId": "$origId",
-                        "date": "$date",
+                        "messageId": "$_id",
+                        "date": "$createdAt",
                     }
                 }
             ],
-            function(err,results) {
+            function (err, results) {
                 if (err) return reject(err);
-                results.forEach((data, index) => {
-                    if (data.to) {
-                        results[index].to.avtar = `${avatarBaseUrl}${data.to.name}`;
+                const users = {};
+                results.forEach((data) => {
+                    if (data.to._id.toString() === userId) {
+                        const isExists = Object.keys(users).includes(data.from._id.toString());
+                        if (!isExists) {
+                            users[data.from._id] = {
+                                displayName: data.from.name,
+                                userId: data.from._id,
+                                avtar: `${avatarBaseUrl}${data.from.name}`,
+                                message: data.message,
+                                createdAt: data.createdAt
+                            };
+                        }
                     }
+                    if (data.from._id.toString() === userId) {
+                        const isExists = Object.keys(users).includes(data.to._id.toString());
+                        if (!isExists) {
+                            users[data.to._id] = {
+                                displayName: data.to.name,
+                                userId: data.to._id,
+                                avtar: `${avatarBaseUrl}${data.to.name}`,
+                                message: data.message,
+                                date: data.date
+                            };
+                        }
+                    }
+
                 })
-                return resolve(results);
+                return resolve(Object.keys(users).map((key) => users[key]));
             })
 
     }),
