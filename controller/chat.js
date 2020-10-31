@@ -79,7 +79,7 @@ chatController = {
                                 userId: data.from._id,
                                 avtar: `${avatarBaseUrl}${data.from.name}`,
                                 message: data.message,
-                                createdAt: data.createdAt
+                                date: data.date
                             };
                         }
                     }
