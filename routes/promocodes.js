@@ -1,14 +1,11 @@
 const express = require('express');
 const router = express.Router();
 
-const PromoCodes = require('../model/promoCodes');
+const PromoCodeController = require('../controller/promoCode');
 
 /* GET promoCodes listing. */
 router.get('/', function (req, res, next) {
-	PromoCodes.find({ isActive: true })
-		.populate('serviceProvider')
-		.lean()
-		.exec()
+	PromoCodeController.get()
 		.then((promoCodes) => {
 			res.status(200).send(promoCodes);
 		})
@@ -18,10 +15,7 @@ router.get('/', function (req, res, next) {
 });
 
 router.get('/all', function (req, res, next) {
-	PromoCodes.find({})
-		.populate('serviceProvider')
-		.lean()
-		.exec()
+	PromoCodeController.getAll()
 		.then((promoCodes) => {
 			res.status(200).send(promoCodes);
 		})
@@ -32,10 +26,7 @@ router.get('/all', function (req, res, next) {
 
 router.get('/provider/:id', function (req, res, next) {
 	const serviceId = req.params.id;
-	PromoCodes.find({ serviceProvider: serviceId, isActive: true })
-		.populate('serviceProvider')
-		.lean()
-		.exec()
+	PromoCodeController.getbyProviderId(serviceId)
 		.then((promoCodes) => {
 			res.status(200).send(promoCodes);
 		})
@@ -46,10 +37,7 @@ router.get('/provider/:id', function (req, res, next) {
 
 router.get('/user/:id', function (req, res, next) {
 	const userId = req.params.id;
-	PromoCodes.find({ user: userId, isActive: true })
-		.populate('serviceProvider user')
-		.lean()
-		.exec()
+	PromoCodeController.getbyUserId(userId)
 		.then((promoCodes) => {
 			res.status(200).send(promoCodes);
 		})
@@ -60,10 +48,7 @@ router.get('/user/:id', function (req, res, next) {
 
 
 router.get('/:id', function (req, res, next) {
-	PromoCodes.findOne({ _id: req.params.id })
-		.populate('serviceProvider')
-		.lean()
-		.exec()
+	PromoCodeController.getById(req.params.id)
 		.then((promoCode) => {
 			if (promoCode) {
 				return res.status(200).send({ isSuccess: true, promoCode });
@@ -77,13 +62,13 @@ router.get('/:id', function (req, res, next) {
 });
 
 router.post('/', function (req, res, next) {
-	const promoCodeDocument = new PromoCodes({ ...req.body });
-	promoCodeDocument.save().then((promoCode) => {
-		delete promoCode._doc.password;
-		return res.status(200).send({ promoCode: promoCodeDocument });
-	}).catch((error) => {
-		return res.status(error.status || 500).send(error);
-	})
+	PromoCodeController.add(req.body)
+		.then((promoCode) => {
+			delete promoCode._doc.password;
+			return res.status(200).send({ promoCode: promoCodeDocument });
+		}).catch((error) => {
+			return res.status(error.status || 500).send(error);
+		})
 });
 
 router.put('/:id', function (req, res, next) {
@@ -91,18 +76,12 @@ router.put('/:id', function (req, res, next) {
 });
 
 router.delete('/:id', function (req, res, next) {
-	PromoCodes.findOne({ _id: req.params.id })
-		.lean()
-		.exec()
-		.then(async (promoCode) => {
-			promoCode.isDeleted = true;
-			promoCode.isActive = false;
-			await PromoCodes.findOneAndUpdate({ _id: promoCode._id }, promoCode);
-			res.status(200).send({ isSuccess: true, message: 'promoCode deleted' });
-		})
-		.catch((error) => {
-			res.status(error.status || 500).send(error);
-		})
+	PromoCodeController.delete(req.params.id)
+		.then((data) => {
+			return res.status(200).send(data);
+		}).catch((error) => {
+			return res.status(error.status || 500).send(error);
+		});
 });
 
 module.exports = router;
