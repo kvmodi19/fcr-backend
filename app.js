@@ -13,13 +13,12 @@ const serviceProviderRouter = require('./routes/serviceProvider');
 const notificationsRouter = require('./routes/notification');
 const promoCodeRouter = require('./routes/promocodes');
 const chatRouter = require('./routes/chat');
+const productRouter = require('./routes/products');
 
 // middleware
 const middleware = require('./handler/middleware');
 
 const app = express();
-// enable cors
-app.use(cors('*'));
 
 // body-parser
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -31,12 +30,15 @@ app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+// enable cors
+app.use(cors('*'));
 
 app.use('/', indexRouter);
 app.use('/users', middleware.authUser, usersRouter.router);
-app.use('/serviceProvider', middleware.authUser, serviceProviderRouter);
-app.use('/notifications', middleware.authUser, notificationsRouter);
+app.use('/serviceProvider', serviceProviderRouter);
+app.use('/notifications', notificationsRouter);
 app.use('/promoCodes', middleware.authUser, promoCodeRouter);
+app.use('/products', middleware.authUser, productRouter);
 app.use('/chat', middleware.authUser, chatRouter);
 
 app.post('/login', (req, res) => {

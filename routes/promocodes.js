@@ -6,7 +6,7 @@ const PromoCodes = require('../model/promoCodes');
 /* GET promoCodes listing. */
 router.get('/', function (req, res, next) {
 	PromoCodes.find({ isActive: true })
-		.populate('shop')
+		.populate('serviceProvider')
 		.lean()
 		.exec()
 		.then((promoCodes) => {
@@ -19,7 +19,7 @@ router.get('/', function (req, res, next) {
 
 router.get('/all', function (req, res, next) {
 	PromoCodes.find({})
-		.populate('shop')
+		.populate('serviceProvider')
 		.lean()
 		.exec()
 		.then((promoCodes) => {
@@ -61,7 +61,7 @@ router.get('/user/:id', function (req, res, next) {
 
 router.get('/:id', function (req, res, next) {
 	PromoCodes.findOne({ _id: req.params.id })
-		.populate('shop')
+		.populate('serviceProvider')
 		.lean()
 		.exec()
 		.then((promoCode) => {
